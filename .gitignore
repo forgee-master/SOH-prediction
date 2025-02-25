@@ -171,3 +171,11 @@ cython_debug/
 .pypirc
 
 data/
+
+.DS_Store
+
+run.py
+
+results/
+
+.vscode/
