@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 
 
-class MLP(nn.Module):
+class Model(nn.Module, args):
     '''
     input shape: (N,4,128)
     '''
 
     def __init__(self):
-        super(MLP, self).__init__()
+        super(Model, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(128*4,256),
             nn.ReLU(),
@@ -32,12 +32,12 @@ class MLP(nn.Module):
         out = self.predictor(fea)
         return out
 
-if __name__ == '__main__':
-    x = torch.rand(30,4,128)
+# if __name__ == '__main__':
+#     x = torch.rand(30,4,128)
 
-    net = MLP()
-    y = net(x)
-    print(x.shape,y.shape)
+#     net = MLP()
+#     y = net(x)
+#     print(x.shape,y.shape)
 
-    num_params = sum(param.numel() for param in net.parameters())
-    print(num_params)
+#     num_params = sum(param.numel() for param in net.parameters())
+#     print(num_params)

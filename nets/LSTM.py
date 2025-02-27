@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 
 
-class LSTM(nn.Module):
+class Model(nn.Module):
     '''
     input shape: (N,4,128)
     '''
 
-    def __init__(self):
-        super(LSTM, self).__init__()
+    def __init__(self, args):
+        super(Model, self).__init__()
         self.net = nn.LSTM(input_size=4,hidden_size=128,num_layers=2,batch_first=True)
         self.predictor = nn.Sequential(
             nn.Linear(128,64),
@@ -28,12 +28,12 @@ class LSTM(nn.Module):
 
         return pred
 
-if __name__ == '__main__':
-    x = torch.rand(30,4,128)
+# if __name__ == '__main__':
+#     x = torch.rand(30,4,128)
 
-    net = LSTM()
-    y = net(x)
-    print(x.shape,y.shape)
+#     net = LSTM()
+#     y = net(x)
+#     print(x.shape,y.shape)
 
-    num_params = sum(param.numel() for param in net.parameters())
-    print(num_params)
+#     num_params = sum(param.numel() for param in net.parameters())
+#     print(num_params)

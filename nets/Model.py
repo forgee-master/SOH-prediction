@@ -1,16 +1,12 @@
 import torch
 import torch.nn as nn
-from nets.CNN import CNN
-from nets.LSTM import LSTM
-from nets.Attention import Attention
-from nets.GRU import GRU
-from nets.MLP import MLP
+from nets import CNN, LSTM, GRU, MLP, Attention
 from utils.util import AverageMeter,eval_metrix
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-class SOHMode(nn.Module):
+class SOHModel(nn.Module):
     '''
     data shape:
     charge_data (N,4,128)
@@ -18,30 +14,34 @@ class SOHMode(nn.Module):
     features (N,1,67)
     '''
     def __init__(self,args):
-        super(SOHMode,self).__init__()
+        super(SOHModel,self).__init__()
         self.args = args
         self.pre_net = self._preprocessing_net()
         self.backbone = self._backbone()
-        self.pre_net.to(args.device)
-        self.backbone.to(args.device)
+        self.pre_net.to(self.args.device)
+        self.backbone.to(self.args.device)
         self._initialize_weights()
-        self.optimizer = torch.optim.Adam(
-            self.parameters(),
-            lr=self.args.lr,
-            weight_decay=self.args.weight_decay
-        )
+        
 
-        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(
-                self.optimizer,
-                [30,70],
-                gamma=0.5,
-            )
-
-        self.mse = torch.nn.MSELoss()
+        
         self.loss_meter = AverageMeter()
-        self.best_state = None
+        #self.best_state = None
 
-
+    def _backbone(self):
+        model_dict = {
+            "CNN": CNN,
+            "LSTM": LSTM,
+            "GRU": GRU,
+            "MLP": MLP,
+            "Attention": Attention
+            }
+        
+        try:
+            backbone = model_dict[self.args.model].Model(self.args).float()
+        except Exception as e:
+            raise ValueError(f"Model Initialization error for {self.args.model}. ERROR:\n {e}")   
+        
+        return backbone
 
 
     def _preprocessing_net(self):
@@ -59,9 +59,7 @@ class SOHMode(nn.Module):
         return net
 
 
-    def _backbone(self):
-        backbone = eval(self.args.model)()
-        return backbone
+    
 
     def forward(self,x):
         if self.args.input_type == 'handcraft_features':
@@ -70,19 +68,19 @@ class SOHMode(nn.Module):
         out = self.backbone(x)
         return out
 
-    def _train_one_epoch(self,train_loader):
-        self.pre_net.train()
-        self.backbone.train()
-        self.loss_meter.reset()
-        for data,label in train_loader:
-            data,label = data.to(self.args.device),label.to(self.args.device)
-            pred = self.forward(data)
-            loss = self.mse(pred, label)
+    # def _train_one_epoch(self,train_loader):
+    #     self.pre_net.train()
+    #     self.backbone.train()
+    #     self.loss_meter.reset()
+    #     for data,label in train_loader:
+    #         data,label = data.to(self.args.device),label.to(self.args.device)
+    #         pred = self.forward(data)
+    #         loss = self.mse(pred, label)
 
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-            self.loss_meter.update(loss.item())
+    #         self.optimizer.zero_grad()
+    #         loss.backward()
+    #         self.optimizer.step()
+    #         self.loss_meter.update(loss.item())
 
     def predict(self,test_loader):
         self.pre_net.eval()

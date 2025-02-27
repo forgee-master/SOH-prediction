@@ -30,12 +30,12 @@ class ResBlock(nn.Module):
 
 
 
-class CNN(nn.Module):
+class Model(nn.Module):
     '''
     input shape: (N,4,128)
     '''
-    def __init__(self):
-        super(CNN,self).__init__()
+    def __init__(self, args):
+        super(Model,self).__init__()
         self.layer1 = ResBlock(input_channel=4, output_channel=16, stride=1) # N,16,128
         self.layer2 = ResBlock(input_channel=16, output_channel=32, stride=2) # N,32,64
         self.layer3 = ResBlock(input_channel=32, output_channel=64, stride=2)  # N,64,32
@@ -63,12 +63,12 @@ class CNN(nn.Module):
         pred = self.predictor(out.view(out.size(0), -1))
         return pred
 
-if __name__ == '__main__':
-    x = torch.rand(30,4,128)
+# if __name__ == '__main__':
+#     x = torch.rand(30,4,128)
 
-    net = CNN()
-    y = net(x)
-    print(x.shape,y.shape)
+#     net = CNN()
+#     y = net(x)
+#     print(x.shape,y.shape)
 
-    num_params = sum(param.numel() for param in net.parameters())
-    print(num_params)
+#     num_params = sum(param.numel() for param in net.parameters())
+#     print(num_params)

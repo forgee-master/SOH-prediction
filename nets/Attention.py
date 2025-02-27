@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 
-class Attention(nn.Module):
+class Model(nn.Module):
     '''
     input shape: (N,4,128)
     '''
 
-    def __init__(self):
-        super(Attention, self).__init__()
+    def __init__(self, args):
+        super(Model, self).__init__()
         self.dmodel = 128
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=self.dmodel,nhead=4,dim_feedforward=128)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer=self.encoder_layer,num_layers=2)
@@ -32,12 +32,12 @@ class Attention(nn.Module):
         return pred
 
 
-if __name__ == '__main__':
-    x = torch.rand((10, 4, 128)) #(N,C,L)
+# if __name__ == '__main__':
+#     x = torch.rand((10, 4, 128)) #(N,C,L)
 
-    net = Attention()
-    y = net(x)
-    print(x.shape,y.shape)
+#     net = Attention()
+#     y = net(x)
+#     print(x.shape,y.shape)
 
-    num_params = sum(param.numel() for param in net.parameters())
-    print(num_params)
+#     num_params = sum(param.numel() for param in net.parameters())
+#     print(num_params)
