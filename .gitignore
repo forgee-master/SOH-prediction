@@ -171,6 +171,9 @@ cython_debug/
 .pypirc
 
 data/
+checkpoints/
+results/
+scripts/
 
 .DS_Store
 
