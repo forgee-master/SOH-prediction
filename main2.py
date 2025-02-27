@@ -20,14 +20,14 @@ def get_args():
     
 
     # Model
-    parser.add_argument('--model',type=str,default='CNN',choices=['CNN','LSTM','GRU','MLP','Attention'])
+    parser.add_argument('--model',type=str,default='GRU',choices=['CNN','LSTM','GRU','MLP','Attention'])
 
     # Training Parameters
     parser.add_argument('--batch_size',type=int,default=128)
     parser.add_argument('--lr',type=float,default=2e-3)
     parser.add_argument('--weight_decay', default=5e-4)
-    parser.add_argument('--n_epoch',type=int,default=100)
-    parser.add_argument('--early_stop',default=30)
+    parser.add_argument('--epochs',type=int,default=30)
+    parser.add_argument('--patience',default=5)
     parser.add_argument('--device',default='cpu') #defaults to cuda if available
     parser.add_argument('--save_folder',default='results')
 
@@ -53,12 +53,14 @@ if __name__ == '__main__':
         args.batch,
         args.test_battery_id,
         args.batch_size,
-        args.n_epoch,
+        args.epochs,
         args.lr,
         args.device))
     
     exp = Exp_Main(args)
 
-    #exp.Train()
+    exp.Train()
+
+    exp.Test()
     
 

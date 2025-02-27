@@ -2,12 +2,12 @@ import torch
 import torch.nn as nn
 
 
-class Model(nn.Module, args):
+class Model(nn.Module):
     '''
     input shape: (N,4,128)
     '''
 
-    def __init__(self):
+    def __init__(self, args):
         super(Model, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(128*4,256),
