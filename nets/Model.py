@@ -27,46 +27,48 @@ class SOHModel(nn.Module):
         self.loss_meter = AverageMeter()
         #self.best_state = None
 
-    def _backbone(self):
-        model_dict = {
-            "CNN": CNN,
-            "LSTM": LSTM,
-            "GRU": GRU,
-            "MLP": MLP,
-            "Attention": Attention
-            }
+    # def _backbone(self):
+
+    #     # ## Add y
+    #     # model_dict = {
+    #     #     "CNN": CNN,
+    #     #     "LSTM": LSTM,
+    #     #     "GRU": GRU,
+    #     #     "MLP": MLP,
+    #     #     "Attention": Attention
+    #     #     }
         
-        try:
-            backbone = model_dict[self.args.model].Model(self.args).float()
-        except Exception as e:
-            raise ValueError(f"Model Initialization error for {self.args.model}. ERROR:\n {e}")   
+    #     try:
+    #         backbone = model_dict[self.args.model].Model(self.args).float()
+    #     except Exception as e:
+    #         raise ValueError(f"Model Initialization error for {self.args.model}. ERROR:\n {e}")   
         
-        return backbone
+    #     return backbone
 
 
-    def _preprocessing_net(self):
-        '''
-        A preprocess network which transform data from different sources into the same shape
-        :return: A network, with output shape (N,4,128)
-        '''
-        if self.args.input_type == 'charge': # charge_data (N,4,128)
-            net = nn.Conv1d(in_channels=4,out_channels=4,kernel_size=1)
-        elif self.args.input_type == 'partial_charge': #partial_data (N,4,128)
-            net = nn.Conv1d(in_channels=4, out_channels=4, kernel_size=1)
-        else:  # features (N,1,67)
-            net = nn.Linear(67,128*4) #(N,128*4)
+    # def _preprocessing_net(self):
+    #     '''
+    #     A preprocess network which transform data from different sources into the same shape
+    #     :return: A network, with output shape (N,4,128)
+    #     '''
+    #     if self.args.input_type == 'charge': # charge_data (N,4,128)
+    #         net = nn.Conv1d(in_channels=4,out_channels=4,kernel_size=1)
+    #     elif self.args.input_type == 'partial_charge': #partial_data (N,4,128)
+    #         net = nn.Conv1d(in_channels=4, out_channels=4, kernel_size=1)
+    #     else:  # features (N,1,67)
+    #         net = nn.Linear(67,128*4) #(N,128*4)
 
-        return net
+    #     return net
 
 
     
 
-    def forward(self,x):
-        if self.args.input_type == 'handcraft_features':
-            x = self.pre_net(x)
-            x = x.view(-1,4,128)
-        out = self.backbone(x)
-        return out
+    # def forward(self,x):
+    #     if self.args.input_type == 'handcraft_features':
+    #         x = self.pre_net(x)
+    #         x = x.view(-1,4,128)
+    #     out = self.backbone(x)
+    #     return out
 
     # def _train_one_epoch(self,train_loader):
     #     self.pre_net.train()
@@ -188,39 +190,39 @@ class SOHModel(nn.Module):
 
 
 
-if __name__ == '__main__':
-    def get_args():
-        import argparse
-        parser = argparse.ArgumentParser(description='A benchmark for SOH estimation')
-        parser.add_argument('--random_seed', type=int, default=2023)
-        # data
-        parser.add_argument('--data', type=str, default='XJTU', choices=['XJTU', 'MIT'])
-        parser.add_argument('--input_type', type=str, default='charge',
-                            choices=['charge', 'partial_charge', 'handcraft_features'])
-        parser.add_argument('--batch_size', type=int, default=128)
-        parser.add_argument('--normalized_type', type=str, default='minmax', choices=['minmax', 'standard'])
-        parser.add_argument('--minmax_range', type=tuple, default=(0, 1), choices=[(0, 1), (1, 1)])
-        parser.add_argument('--batch', type=int, default=1, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+# if __name__ == '__main__':
+#     def get_args():
+#         import argparse
+#         parser = argparse.ArgumentParser(description='A benchmark for SOH estimation')
+#         parser.add_argument('--random_seed', type=int, default=2023)
+#         # data
+#         parser.add_argument('--data', type=str, default='XJTU', choices=['XJTU', 'MIT'])
+#         parser.add_argument('--input_type', type=str, default='charge',
+#                             choices=['charge', 'partial_charge', 'handcraft_features'])
+#         parser.add_argument('--batch_size', type=int, default=128)
+#         parser.add_argument('--normalized_type', type=str, default='minmax', choices=['minmax', 'standard'])
+#         parser.add_argument('--minmax_range', type=tuple, default=(0, 1), choices=[(0, 1), (1, 1)])
+#         parser.add_argument('--batch', type=int, default=1, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-        # model
-        parser.add_argument('--model', type=str, default='LSTM', choices=['CNN', 'LSTM', 'GRU', 'MLP', 'Attention'])
+#         # model
+#         parser.add_argument('--model', type=str, default='LSTM', choices=['CNN', 'LSTM', 'GRU', 'MLP', 'Attention'])
 
-        parser.add_argument('--lr', type=float, default=2e-3)
-        parser.add_argument('--weight_decay', default=5e-4)
-        parser.add_argument('--n_epoch', type=int, default=500)
-        parser.add_argument('--early_stop', default=20)
-        parser.add_argument('--device', default='cuda')
+#         parser.add_argument('--lr', type=float, default=2e-3)
+#         parser.add_argument('--weight_decay', default=5e-4)
+#         parser.add_argument('--n_epoch', type=int, default=500)
+#         parser.add_argument('--early_stop', default=20)
+#         parser.add_argument('--device', default='cuda')
 
-        args = parser.parse_args()
-        return args
+#         args = parser.parse_args()
+#         return args
 
 
-    args = get_args()
-    model = SOHMode(args)
+#     args = get_args()
+#     model = SOHMode(args)
 
-    x1 = torch.rand(30,4,128).to('cuda')
-    x2 = torch.rand(30,1,67)
+#     x1 = torch.rand(30,4,128).to('cuda')
+#     x2 = torch.rand(30,1,67)
 
-    y = model(x1)
-    print(model)
-    print('output shape:',y.shape)
+#     y = model(x1)
+#     print(model)
+#     print('output shape:',y.shape)
