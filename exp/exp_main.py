@@ -1,11 +1,17 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from dataloader.XJTU_loader import XJTUDdataset
 from dataloader.MIT_loader import MITDdataset
 #from nets.Model import SOHModel
-from nets.preprocessing import PreProcessing
+from layers.preprocessing import PreProcessingNet
 from nets import CNN, LSTM, GRU, MLP, Attention
+from utils.metrics import metric
+import matplotlib.pyplot as plt
+
+import os
+import uuid
 
 class Exp_Main:
 
@@ -29,6 +35,24 @@ class Exp_Main:
             )
 
         self.criterion = self._select_criterion()
+
+        self.run_id = uuid.uuid4().hex[:4] # Short unique ID
+        self.results_dir = self._make_dir(self.run_id)
+    
+        self.best_model_path = f"checkpoints/best_model_{self.args.model}_{self.run_id}.pth"
+
+    
+    def _make_dir(self, id):
+        if not os.path.exists("checkpoints"):
+            os.makedirs("checkpoints")
+
+        if not os.path.exists("results"):
+            os.makedirs("results")
+
+        result_dir = f"results/{self.args.model}_{id}"
+        os.makedirs(result_dir)
+
+        return result_dir
 
     def _load_data(self, args, **kwargs):
 
@@ -77,7 +101,7 @@ class Exp_Main:
             }
         try:
             model = nn.Sequential(
-                PreProcessing(self.args.input_type).float(),
+                PreProcessingNet(self.args).float(),
                 model_dict[self.args.model].Model(self.args).float()
             )
         except Exception as e:
@@ -95,7 +119,7 @@ class Exp_Main:
         val_loader = self.data_loader["valid"]
 
         best_val_loss = float("inf")
-        best_model_path = f"checkpoints/best_model_{self.args.model}.pth"
+        
 
         self.train_loss = []
         self.valid_loss = []
@@ -134,7 +158,7 @@ class Exp_Main:
             # Save the best model
             if epoch_val_loss < best_val_loss:
                 best_val_loss = epoch_val_loss
-                torch.save(self.model.state_dict(), best_model_path)
+                torch.save(self.model.state_dict(), self.best_model_path)
                 #print(f"Epoch {epoch+1}: New best model saved with validation loss {epoch_val_loss:.4f}")
                 patience_counter = 0  # Reset counter when improvement is seen
             else:
@@ -148,26 +172,72 @@ class Exp_Main:
             print(f"Epoch {epoch+1}/{self.args.epochs}, Train Loss: {epoch_train_loss:.4f}, Val Loss: {epoch_val_loss:.4f}")
 
     def Test(self):
-        self.model.to(self.args.device)
+        self.model.load_state_dict(torch.load(self.best_model_path, map_location= self.args.device))
         self.model.eval()
 
         test_loader = self.data_loader["test"]
-        total_loss = 0.0
+        pred = []
+        true = []
+
 
         with torch.no_grad():
             for inputs,labels in test_loader:
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels)
-                total_loss += loss.item()
 
-        avg_test_loss = total_loss / len(test_loader)
-        print(f"Test Loss: {avg_test_loss:.4f}")
+                
+                pred.append(outputs.detach().clone().cpu().numpy())
+                true.append(labels.detach().clone().cpu().numpy())
+
+        preds = np.concatenate(pred, axis=0)
+        trues = np.concatenate(true, axis=0)
+
+        mae, mse, rmse, mape = metric(preds, trues)
+
+        with open("results/result.txt", "a") as f:
+            f.write("{}_model{}__{}_dataset__{}_features__{}_batch__{}_battery_test_id__{}_batch_size__{}_epochs__{}_lr__{}_device\n".format(
+                self.args.model,
+                self.run_id,
+                self.args.dataset,
+                self.args.input_type,
+                self.args.batch,
+                self.args.test_battery_id,
+                self.args.batch_size,
+                self.args.epochs,
+                self.args.lr,
+                self.args.device))
+            
+            f.write(f"Test Loss\nMAE:{mae} MSE:{mse} RMSE:{rmse} MAPE:{mape}\n\n")
+
+            
 
 
-    def _save_results(self):
-        pass
+        
+        self._save_results(preds, trues)
+        self._plot_results(preds, trues)
+        print(f"Test Loss\nMAE:{mae} MSE:{mse} RMSE:{rmse} MAPE:{mape}")
 
 
-    def _plot_results(self):
-        pass
+    def _save_results(self, preds, trues):
+        """Save predictions and ground truth values as .npy files."""
+        np.save(f"{self.results_dir}/predictions_{self.run_id}.npy", preds)
+        np.save(f"{self.results_dir}/ground_truth_{self.run_id}.npy", trues)
+
+
+    def _plot_results(self, preds, trues):
+        """Plot predictions vs. ground truth and save the figure."""
+        
+        
+        plt.figure(figsize=(10, 5))
+        plt.plot(trues, label="Ground Truth", linestyle="dashed")
+        plt.plot(preds, label="Predictions", alpha=0.7)
+        plt.xlabel("Time Step")
+        plt.ylabel("SOH")
+        plt.title("Predictions vs Ground Truth")
+        plt.legend()
+        plt.grid()
+        
+        plot_path = f"{self.results_dir}/plot.png"
+        plt.savefig(plot_path)
+        #plt.show()
+        
