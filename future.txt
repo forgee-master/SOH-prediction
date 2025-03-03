@@ -1,0 +1,10 @@
+## Preprocessing.py -->
+
+1. The preprocessing net is little questionable, as it does not allow to work  with raw datasets too. 
+Raw dataset generator exists.
+
+2. The preprocessing convolutions for charge and partial charge does not undergo batch/layer normalization.
+
+3. What are these 4 features, we have to only depend on?
+
+4. 67 handcrafted features are getting converted to 128*4. This is high dimensional space. How effective is it?

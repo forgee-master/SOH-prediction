@@ -29,7 +29,7 @@ def get_args():
     parser.add_argument('--epochs',type=int,default=30)
     parser.add_argument('--patience',default=5)
     parser.add_argument('--device',default='cpu') #defaults to cuda if available
-    parser.add_argument('--save_folder',default='results')
+
 
     # Experiment Parameters
     parser.add_argument('--experiment_num',default=1,type=int,help='The number of times you want to repeat the same experiment')
