@@ -10,6 +10,7 @@ class Model(nn.Module):
     def __init__(self, args):
         super(Model, self).__init__()
         self.net = nn.GRU(input_size=4,hidden_size=128,num_layers=2,batch_first=True)
+        
         self.predictor = nn.Sequential(
             nn.Linear(128, 64),
             nn.ReLU(),

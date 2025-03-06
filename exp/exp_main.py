@@ -6,12 +6,13 @@ from dataloader.XJTU_loader import XJTUDdataset
 from dataloader.MIT_loader import MITDdataset
 #from nets.Model import SOHModel
 from layers.preprocessing import PreProcessingNet
-from nets import CNN, LSTM, GRU, MLP, Attention
+from nets import CNN, LSTM, GRU, MLP, Attention, DCTLowRank
 from utils.metrics import metric
 import matplotlib.pyplot as plt
 
 import os
 import uuid
+import csv
 
 class Exp_Main:
 
@@ -97,11 +98,12 @@ class Exp_Main:
             "LSTM": LSTM,
             "GRU": GRU,
             "MLP": MLP,
-            "Attention": Attention
+            "Attention": Attention,
+            "DCTLora": DCTLowRank
             }
         try:
             model = nn.Sequential(
-                PreProcessingNet(self.args).float(),
+                #PreProcessingNet(self.args).float(),
                 model_dict[self.args.model].Model(self.args).float()
             )
         except Exception as e:
@@ -159,17 +161,20 @@ class Exp_Main:
             if epoch_val_loss < best_val_loss:
                 best_val_loss = epoch_val_loss
                 torch.save(self.model.state_dict(), self.best_model_path)
-                #print(f"Epoch {epoch+1}: New best model saved with validation loss {epoch_val_loss:.4f}")
                 patience_counter = 0  # Reset counter when improvement is seen
+                model_saved = "TRUE"
             else:
                 patience_counter += 1  # Increment counter when no improvement
+                model_saved = "FALSE"
             
             if patience_counter >= patience:
                 print(f"Early stopping triggered after {epoch+1} epochs with best validation loss {best_val_loss:.4f}")
                 break
             
             self.scheduler.step()
-            print(f"Epoch {epoch+1}/{self.args.epochs}, Train Loss: {epoch_train_loss:.4f}, Val Loss: {epoch_val_loss:.4f}")
+            statement = f"Epoch {epoch+1}/{self.args.epochs}, Train Loss: {epoch_train_loss:.5f}, Val Loss: {epoch_val_loss:.5f}, Model Saved: {model_saved}, lr: {self.optimizer.param_groups[0]['lr']}, patience: {patience_counter}/{patience}"
+            print(statement)
+            
 
     def Test(self):
         self.model.load_state_dict(torch.load(self.best_model_path, map_location= self.args.device))
@@ -194,25 +199,34 @@ class Exp_Main:
 
         mae, mse, rmse, mape = metric(preds, trues)
 
-        with open("results/result.txt", "a") as f:
-            f.write("{}_model{}__{}_dataset__{}_features__{}_batch__{}_battery_test_id__{}_batch_size__{}_epochs__{}_lr__{}_device\n".format(
+        file_path = "results/result.csv"
+        file_exists = os.path.exists(file_path)
+        
+        with open(file_path, mode='a', newline='') as f:
+            writer = csv.writer(f)
+            
+            # Write header if file does not exist
+            if not file_exists:
+                writer.writerow(["Model", "Run_ID", "Dataset", "Input_Type", "Batch", "Test_Battery_ID", "Batch_Size", "Epochs", "LR", "Device", "MAE", "MSE", "RMSE", "MAPE"])
+            
+            # Write data
+            writer.writerow([
                 self.args.model,
                 self.run_id,
                 self.args.dataset,
                 self.args.input_type,
-                self.args.batch,
+                self.args.battery_batch,
                 self.args.test_battery_id,
                 self.args.batch_size,
                 self.args.epochs,
                 self.args.lr,
-                self.args.device))
-            
-            f.write(f"Test Loss\nMAE:{mae} MSE:{mse} RMSE:{rmse} MAPE:{mape}\n\n")
+                self.args.device,
+                mae,
+                mse,
+                rmse,
+                mape
+            ])
 
-            
-
-
-        
         self._save_results(preds, trues)
         self._plot_results(preds, trues)
         print(f"Test Loss\nMAE:{mae} MSE:{mse} RMSE:{rmse} MAPE:{mape}")

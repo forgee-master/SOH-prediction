@@ -9,35 +9,27 @@ class Model(nn.Module):
 
     def __init__(self, args):
         super(Model, self).__init__()
+        self.seq_len = args.seq_len # L
+        self.in_features = args.post_features # c
+        self.net_hidden_size = args.mlp_hidden_size
+        self.pred_hidden_size = args.pred_hidden_size
+
         self.net = nn.Sequential(
-            nn.Linear(128*4,256),
+            nn.Linear(self.seq_len * self.in_features, self.net_hidden_size),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(256,128),
+            nn.Linear(self.net_hidden_size, self.seq_len),
             nn.ReLU(),
         )
         self.predictor = nn.Sequential(
-            nn.Linear(128, 64),
+            nn.Linear(self.seq_len, self.pred_hidden_size),
             nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(self.pred_hidden_size, 1)
         )
 
+    # x: (N, c, L)
     def forward(self, x):
-        '''
-        :param x: (N,4,128)
-        :return:
-        '''
-        x = x.view(-1,4*128)
+        x = x.view(-1,self.in_features*self.seq_len)
         fea = self.net(x)
         out = self.predictor(fea)
         return out
-
-# if __name__ == '__main__':
-#     x = torch.rand(30,4,128)
-
-#     net = MLP()
-#     y = net(x)
-#     print(x.shape,y.shape)
-
-#     num_params = sum(param.numel() for param in net.parameters())
-#     print(num_params)
