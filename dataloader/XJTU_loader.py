@@ -11,12 +11,12 @@ from utils.Scaler import Scaler
 class XJTUDdataset():
     def __init__(self,args):
         super(XJTUDdataset).__init__()
-        self.root = 'data/XJTU'
+
+        self.root = f'{args.data_folder}/XJTU'
         self.max_capacity = 2.0
         self.normalized_type = args.normalized_type
         self.minmax_range = args.minmax_range
-        self.seed = args.random_seed
-        self.batch = args.batch
+        self.batch = args.battery_batch
         self.batch_size = args.batch_size
 
 
@@ -28,15 +28,17 @@ class XJTUDdataset():
         '''
         data = []
         label = []
+
         for i in range(battery_i_mat.shape[1]):
             cycle_i_data = battery_i_mat[0,i]
-            time = cycle_i_data['relative_time_min'] # (1,128)
+            #time = cycle_i_data['relative_time_min'] # (1,128)
             current = cycle_i_data['current_A'] # (1,128)
             voltage = cycle_i_data['voltage_V'] # (1,128)
             temperature = cycle_i_data['temperature_C'] # (1,128)
             capacity = cycle_i_data['capacity'][0]
             label.append(capacity)
-            cycle_i = np.concatenate([time,current,voltage,temperature],axis=0)
+            #cycle_i = np.concatenate([time,current,voltage,temperature],axis=0)
+            cycle_i = np.concatenate([current,voltage,temperature],axis=0)
             data.append(cycle_i)
         data = np.array(data,dtype=np.float32)
         label = np.array(label,dtype=np.float32)
@@ -65,7 +67,7 @@ class XJTUDdataset():
         test_x = torch.from_numpy(test_x)
         test_y = torch.from_numpy(test_y)
 
-        train_x, valid_x, train_y, valid_y = train_test_split(train_x, train_y, test_size=0.2, random_state=self.seed)
+        train_x, valid_x, train_y, valid_y = train_test_split(train_x, train_y, test_size=0.2)
         train_loader = DataLoader(TensorDataset(train_x, train_y), batch_size=self.batch_size, shuffle=True,
                                   drop_last=False)
         valid_loader = DataLoader(TensorDataset(valid_x, valid_y), batch_size=self.batch_size, shuffle=True,
@@ -177,32 +179,3 @@ class XJTUDdataset():
                      'valid': valid_loader}
         print('---------------  finished !  ----------------')
         return data_dict
-
-
-
-
-
-if __name__ == '__main__':
-    import argparse
-    def get_args():
-
-        parser = argparse.ArgumentParser(description='dataloader test')
-        parser.add_argument('--random_seed',type=int,default=2023)
-        # data
-        parser.add_argument('--data', type=str, default='XJTU', choices=['XJTU', 'MIT', 'CALCE'])
-        parser.add_argument('--input_type', type=str, default='charge',
-                            choices=['charge', 'partial_charge', 'handcraft_features'])
-        parser.add_argument('--normalized_type', type=str, default='minmax', choices=['minmax', 'standard'])
-        parser.add_argument('--minmax_range', type=tuple, default=(0, 1), choices=[(0, 1), (1, 1)])
-        parser.add_argument('--batch_size', type=int, default=128)
-        # the parameters for XJTU data
-        parser.add_argument('--batch', type=int, default=1, choices=[1, 2, 3, 4, 5])
-
-        args = parser.parse_args()
-        return args
-
-    args = get_args()
-    data = XJTUDdataset(args)
-    charge_data = data.get_charge_data()
-    partial_data = data.get_partial_data()
-    features = data.get_features()
