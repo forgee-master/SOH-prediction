@@ -8,3 +8,37 @@ Raw dataset generator exists.
 3. What are these 4 features, we have to only depend on?
 
 4. 67 handcrafted features are getting converted to 128*4. This is high dimensional space. How effective is it?
+
+## Preprocessing.py -->
+
+1. The preprocessing net is little questionable, as it does not allow to work  with raw datasets too. 
+Raw dataset generator exists.
+
+2. The preprocessing convolutions for charge and partial charge does not undergo batch/layer normalization.
+    - Batch Normalization has been added. Need to perform testing with and without to see its effects are good or bad.
+
+3. What are these 4 features, we have to only depend on?
+    - Voltage, Current, Temperature, relative_time_min
+
+4. 67 handcrafted features are getting converted to 128*4. This is high dimensional space. How effective is it?
+    - 
+
+
+## LSTM/GRU -->
+
+1. Why is it so bad?
+
+
+## Attention -->
+
+1. Why does it have a bias?
+
+
+
+## SOH Plot -->
+
+1. Why is SOH Plot an increasing decresaing curve?
+     - It is a natural Phenomenon referred as capcity recovery or initial capacity rise.
+
+
+

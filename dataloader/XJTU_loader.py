@@ -4,6 +4,7 @@ import pandas as pd
 import torch
 from torch.utils.data import TensorDataset,DataLoader
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import os
 import matplotlib.pyplot as plt
 from utils.Scaler import Scaler
@@ -12,6 +13,7 @@ class XJTUDdataset():
     def __init__(self,args):
         super(XJTUDdataset).__init__()
 
+        self.args = args
         self.root = f'{args.data_folder}/XJTU'
         self.max_capacity = 2.0
         self.normalized_type = args.normalized_type
@@ -42,16 +44,14 @@ class XJTUDdataset():
             data.append(cycle_i)
         data = np.array(data,dtype=np.float32)
         label = np.array(label,dtype=np.float32)
-        print(data.shape,label.shape)
+        
 
-        scaler = Scaler(data)
-        if self.normalized_type == 'standard':
-            data = scaler.standerd()
-        else:
-            data = scaler.minmax(feature_range=self.minmax_range)
         soh = label / self.max_capacity
+        data = np.transpose(data, axes=(0,2,1))
+        soh = np.expand_dims(soh, -1)
 
-        return data,soh
+        print(data.shape,label.shape)
+        return data, soh
 
     def _encapsulation(self,train_x,train_y,test_x,test_y):
         '''
@@ -94,9 +94,22 @@ class XJTUDdataset():
             x, y = self._parser_mat_data(train_battery)
             train_x.append(x)
             train_y.append(y)
-        train_x = np.concatenate(train_x, axis=0)
+        train_x = np.transpose(np.concatenate(train_x, axis=0), axes=(0,2,1))
         train_y = np.concatenate(train_y, axis=0)
+
         print('train data shape: ', train_x.shape, train_y.shape)
+
+
+        if self.args.normalized_type.lower() == "minmax":
+            sc = MinMaxScaler(feature_range=self.args.minmax_range)
+
+        else:
+            sc = StandardScaler()
+        
+        
+        for i in range(train_x.shape[1]):
+            train_x[:,i,:] = sc.fit_transform(train_x[:,i,:])
+            test_x[:,i,:] = sc.transform(test_x[:,i,:])
 
         return self._encapsulation(train_x, train_y, test_x, test_y)
 
