@@ -39,4 +39,4 @@ class Model(nn.Module):
         return out
     
 
-## Test Loss MAE:4.497 MSE:0.035 MAPE:4.876
+## Test Loss MAE:4.497 MSE:0.035 MAPE:4.876 with Standard Normalization
