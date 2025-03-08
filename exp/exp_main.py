@@ -18,8 +18,9 @@ class Exp_Main:
 
     def __init__(self, args, **kwargs):
         self.args = args
-        self.data_loader = self._load_data(args)
         self.model = self._load_model()
+
+        self.train_loader, self.valid_loader, self.test_loader = self._load_data(args)
         
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
@@ -67,11 +68,11 @@ class Exp_Main:
             loader = datasets[args.dataset](args)
 
             if args.input_type == 'charge':
-                data_loader = loader.get_charge_data(test_battery_id=args.test_battery_id)
+                return loader.get_charge_data(test_battery_id=args.test_battery_id)
             elif args.input_type == 'partial_charge':
-                data_loader = loader.get_partial_data(test_battery_id=args.test_battery_id)
+                return loader.get_partial_data(test_battery_id=args.test_battery_id)
             else:
-                data_loader = loader.get_features(test_battery_id=args.test_battery_id)
+                return loader.get_features(test_battery_id=args.test_battery_id)
         except Exception as e:
             raise ValueError(f"Data Loading failed.\n{e}")
 
@@ -79,14 +80,14 @@ class Exp_Main:
         
     def _select_criterion(self):
         
-        # if self.args.loss == "mae":
-        #     criterion = nn.L1Loss()
-        # elif self.args.loss == "mse":
-        #     criterion = nn.MSELoss()
-        # elif self.args.loss == "smooth":
-        #     criterion = nn.SmoothL1Loss()
-        # else:
-        criterion = nn.MSELoss()
+        if self.args.loss == "mae":
+            criterion = nn.L1Loss()
+        elif self.args.loss == "mse":
+            criterion = nn.MSELoss()
+        elif self.args.loss == "smooth":
+            criterion = nn.SmoothL1Loss()
+        else:
+            criterion = nn.MSELoss()
         return criterion
     
 

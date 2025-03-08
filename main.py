@@ -66,6 +66,7 @@ def get_args():
     parser.add_argument('--epochs',type=int,default=30)
     parser.add_argument('--patience',default=5)
     parser.add_argument('--device',default='cpu') #defaults to cuda if available
+    parser.add_argument('--loss', default="mse")
 
 
     # Experiment Parameters
@@ -98,8 +99,8 @@ if __name__ == '__main__':
     
     exp = Exp_Main(args)
 
-    exp.Train()
+    #exp.Train()
 
-    exp.Test()
+    #exp.Test()
     
 
