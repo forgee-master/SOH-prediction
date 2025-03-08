@@ -28,12 +28,10 @@ class Exp_Main:
             weight_decay=self.args.weight_decay
         )
 
-
-
-        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        self.scheduler = torch.optim.lr_scheduler.StepLR(
                 self.optimizer,
-                [30,70],
-                gamma=0.5,
+                step_size=3,
+                gamma=0.9,
             )
 
         self.criterion = self._select_criterion()
@@ -118,22 +116,19 @@ class Exp_Main:
         self.model.to(self.args.device)
         self.model.train()
 
-        train_loader = self.data_loader["train"]
-        val_loader = self.data_loader["valid"]
-
         best_val_loss = float("inf")
         
 
         self.train_loss = []
         self.valid_loss = []
 
-        patience = self.args.patience  # Number of epochs to wait before stopping
+        patience = int(self.args.patience)  # Number of epochs to wait before stopping
         patience_counter = 0
 
         for epoch in range(self.args.epochs):
             epoch_train_loss = 0.0
 
-            for inputs,labels in train_loader:
+            for inputs,labels in self.train_loader:
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, labels)
@@ -141,21 +136,21 @@ class Exp_Main:
                 self.optimizer.step()
                 epoch_train_loss += loss.item()
             
-            epoch_train_loss /= len(train_loader)
+            epoch_train_loss /= len(self.train_loader)
             self.train_loss.append(epoch_train_loss)
         
             # Validation Phase
-            self.model.eval()
+            #self.model.eval()
             epoch_val_loss = 0.0
 
             with torch.no_grad():
-                for inputs,labels in val_loader:
+                for inputs,labels in self.valid_loader:
                     self.optimizer.zero_grad()
                     outputs = self.model(inputs)
                     loss = self.criterion(outputs, labels)
                     epoch_val_loss += loss.item()
                 
-            epoch_val_loss /= len(val_loader)
+            epoch_val_loss /= len(self.valid_loader)
             self.valid_loss.append(epoch_val_loss)
 
             # Save the best model
@@ -181,13 +176,13 @@ class Exp_Main:
         self.model.load_state_dict(torch.load(self.best_model_path, map_location= self.args.device))
         self.model.eval()
 
-        test_loader = self.data_loader["test"]
+        
         pred = []
         true = []
 
 
         with torch.no_grad():
-            for inputs,labels in test_loader:
+            for inputs,labels in self.test_loader:
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
 
@@ -228,9 +223,9 @@ class Exp_Main:
                 mape
             ])
 
-        self._save_results(preds, trues)
+        #self._save_results(preds, trues)
         self._plot_results(preds, trues)
-        print(f"Test Loss\nMAE:{mae} MSE:{mse} RMSE:{rmse} MAPE:{mape}")
+        print(f"\nTest Loss MAE:{mae * 1e3:.3f} MSE:{mse * 1e3:.3f} MAPE:{mape * 1e3:.3f}")
 
 
     def _save_results(self, preds, trues):
@@ -242,7 +237,9 @@ class Exp_Main:
     def _plot_results(self, preds, trues):
         """Plot predictions vs. ground truth and save the figure."""
         
-        
+        preds = preds.reshape(-1,1)
+        trues = trues.reshape(-1,1)
+
         plt.figure(figsize=(10, 5))
         plt.plot(trues, label="Ground Truth", linestyle="dashed")
         plt.plot(preds, label="Predictions", alpha=0.7)

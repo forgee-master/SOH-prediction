@@ -99,8 +99,8 @@ if __name__ == '__main__':
     
     exp = Exp_Main(args)
 
-    #exp.Train()
+    exp.Train()
 
-    #exp.Test()
+    exp.Test()
     
 
