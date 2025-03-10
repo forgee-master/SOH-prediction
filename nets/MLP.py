@@ -35,10 +35,8 @@ class Model(nn.Module):
 
     # x: (N, c, L)
     def forward(self, x):
-        seq_mean = x.mean(dim=1, keepdim=True) # (N, 1, L)
+        seq_mean = x.mean(dim=-1, keepdim=True) # (N, 1, L)
         x = x - seq_mean # (N, c, L)
         x = self.feature_converter(x)
-        #x = x.view(x.size(0), -1)
         out = self.net(x)
-        #out = torch.unsqueeze(out, -1)
         return out

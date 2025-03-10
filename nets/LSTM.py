@@ -43,13 +43,11 @@ class Model(nn.Module):
     # x: (N, c, L)
     def forward(self, x):
 
-        seq_mean = x.mean(dim=1, keepdim=True) # (N, 1, L)
+        seq_mean = x.mean(dim=-1, keepdim=True) # (N, 1, L)
         x = x - seq_mean # (N, c, L)
         x = self.feature_converter(x)
-
         x = x.permute(0,2,1)
         x = self.states(x)[0]
         x = x[:,-1,:]
         out = self.net(x)
-
         return out
