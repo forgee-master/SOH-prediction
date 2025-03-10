@@ -85,8 +85,8 @@ class XJTUDdataset:
         """
         train_x = torch.from_numpy(train_x)
         test_x = torch.from_numpy(test_x)
-        train_y = torch.unsqueeze(torch.from_numpy(train_y), -1)
-        test_y = torch.unsqueeze(torch.from_numpy(test_y), -1)
+        train_y = torch.from_numpy(train_y)
+        test_y = torch.from_numpy(test_y)
 
         # Split training data into train and validation sets
         train_x, valid_x, train_y, valid_y = train_test_split(train_x, train_y, test_size=0.2)

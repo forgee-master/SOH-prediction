@@ -217,10 +217,10 @@ class Exp_Main:
                 self.args.epochs,
                 self.args.lr,
                 self.args.device,
-                mae,
-                mse,
-                rmse,
-                mape
+                mae * 1e3,
+                mse * 1e3,
+                rmse * 1e3,
+                mape * 1e3
             ])
 
         #self._save_results(preds, trues)

@@ -39,12 +39,11 @@ def get_args():
     parser.add_argument('--model',type=str,default='GRU') # Type of Model. Default is CNN
 
     # Model Parameters
-    # MLP
-    parser.add_argument('--mlp_hidden_size',type=int,default=128)
     
     #LSTM and GRU
-    parser.add_argument('--lstm_hidden_size',type=int,default=128)
-    parser.add_argument('--lstm_num_layers',type=int,default=2)
+    parser.add_argument('--hidden_size',type=int,default=256)
+    parser.add_argument('--num_layers',type=int,default=2)
+    parser.add_argument('--bidirectional',type=bool,default=False)
 
     # CNN
     parser.add_argument('--cnn_hidden_size',type=int,default=128)
