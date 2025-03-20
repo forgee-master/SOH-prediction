@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from nets import CNN, LSTM, GRU, MLP, Attention
+from nets import LSTM, GRU, MLP, Attention, ResNet
 from utils.util import AverageMeter,eval_metrix
 import numpy as np
 import matplotlib.pyplot as plt

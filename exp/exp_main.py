@@ -6,7 +6,7 @@ from dataloader.XJTU_loader import XJTUDdataset
 from dataloader.MIT_loader import MITDdataset
 #from nets.Model import SOHModel
 from layers.preprocessing import PreProcessingNet
-from nets import CNN, LSTM, GRU, MLP, Attention, DCTLowRank
+from nets import HADL, LSTM, GRU, MLP, Attention, ResNet
 from utils.metrics import metric
 import matplotlib.pyplot as plt
 
@@ -93,17 +93,17 @@ class Exp_Main:
 
         ## Add your new models here.
         model_dict = {
-            "CNN": CNN,
+            "RESNET": ResNet,
             "LSTM": LSTM,
             "GRU": GRU,
             "MLP": MLP,
-            "Attention": Attention,
-            "DCTLora": DCTLowRank
+            "ATTENTION": Attention,
+            "HADL": HADL
             }
         try:
             model = nn.Sequential(
                 #PreProcessingNet(self.args).float(),
-                model_dict[self.args.model].Model(self.args).float()
+                model_dict[self.args.model.upper()].Model(self.args).float()
             )
         except Exception as e:
             raise ValueError(f"Model Initialization failed.\n{e}")
