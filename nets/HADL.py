@@ -47,20 +47,22 @@ class Model(nn.Module):
         self.seq_len = args.seq_len # L
         self.enc_in = args.features # c
         self.enable_Haar = True
-        self.enable_DCT = True
         
 
-        self.feature_converter = nn.Sequential(
-            nn.Conv1d(
-                in_channels=self.enc_in, 
-                out_channels=self.enc_in*2, 
-                kernel_size=1, 
-                groups=self.enc_in),
-        )
+        # self.feature_converter = nn.Sequential(
+        #     nn.Conv1d(
+        #         in_channels=self.enc_in, 
+        #         out_channels=self.enc_in*2, 
+        #         kernel_size=1, 
+        #         groups=self.enc_in),
+        # )
 
         # Define low-pass filter for Haar decomposition (averaging adjacent values)
         self.low_pass_filter = torch.tensor([1, 1], dtype=torch.float32) / math.sqrt(2)
         self.low_pass_filter = self.low_pass_filter.reshape(1, 1, -1).repeat(self.enc_in, 1, 1)
+
+        self.high_pass_filter = torch.tensor([-1, 1], dtype=torch.float32) / math.sqrt(2)
+        self.high_pass_filter = self.high_pass_filter.reshape(1, 1, -1).repeat(self.enc_in, 1, 1)
 
         # Adjust input length if Haar decomposition is enabled
         if self.enable_Haar:
@@ -68,22 +70,14 @@ class Model(nn.Module):
         else:
             in_len = self.seq_len  # No Haar decomposition, use full sequence length
 
-
-        self.fc1 = nn.Linear(3,1) 
         self.net = nn.Sequential(
-            
-            LowRank(64, 16, rank=16),
+            LowRank(in_len * 6, 128, rank=30),
             nn.ReLU(),
-            LowRank(16, 1, rank=16),
-            #nn.ReLU(),
-            #LowRank(128, 1, rank=8),
+            LowRank(128, 1, rank=15),
         )
 
     # x: (N, c, L)
     def forward(self, x):
-        seq_mean = x.mean(dim=-1, keepdim=True) # (N, 1, L)
-        x = x - seq_mean # (N, c, L)
-        #x = self.feature_converter(x)
         
         # Apply Haar transformation (low-pass filtering) if enabled
         if self.enable_Haar:
@@ -91,12 +85,14 @@ class Model(nn.Module):
                 x = F.pad(x, (0, 1))  # Pad if sequence length is odd
             
             self.low_pass_filter = self.low_pass_filter.to(x.device)  # Move filter to same device as input
-            x = F.conv1d(input=x, weight=self.low_pass_filter, stride=2, groups=self.enc_in)  # Apply low-pass filter
+            self.high_pass_filter = self.high_pass_filter.to(x.device)
+
+            x1 = F.conv1d(input=x, weight=self.low_pass_filter, stride=2, groups=self.enc_in)  # Apply low-pass filter
+            x2 = F.conv1d(input=x, weight=self.high_pass_filter, stride=2, groups=self.enc_in)
+            x = torch.cat((x1, x2), dim=1)
         
-        # Apply Discrete Cosine Transform (DCT) if enabled
-        if self.enable_DCT:
-            x = DiscreteCosineTransform.apply(x) / x.shape[-1]  # Scale DCT output
-        x = self.fc1(x.permute(0,2,1)).permute(0,2,1)
+
+        x =  torch.flatten(x, start_dim=1, end_dim=-1) # Flatten output for fully connected layers
         out = self.net(x)
          
         return out
